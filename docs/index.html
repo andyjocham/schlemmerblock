@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Schlemmerblock</title>
+  <title>Schlemmerblock 2026</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Schlemmerblock">
+  <meta name="apple-mobile-web-app-title" content="Schlemmerblock 2026">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="theme-color" content="#f2f6f3">
   <link rel="preconnect" href="https://unpkg.com">
@@ -268,7 +268,7 @@
     <section class="panel" aria-label="Filter und Teilnehmer">
       <header>
         <div class="title-row">
-          <h1>Schlemmerblock</h1>
+          <h1>Schlemmerblock 2026</h1>
           <div class="count" id="count">79 Treffer</div>
         </div>
       </header>
@@ -421,8 +421,8 @@
     };
 
     const state = {
-      category: "",
-      tag: "",
+      categories: [],
+      tags: [],
       userLocation: null
     };
 
@@ -530,8 +530,8 @@
 
     function getFiltered() {
       let items = PLACES.filter(place => {
-        const matchesCategory = !state.category || place.category === state.category;
-        const matchesTag = !state.tag || place.tagList.includes(state.tag);
+        const matchesCategory = state.categories.length === 0 || state.categories.includes(place.category);
+        const matchesTag = state.tags.length === 0 || state.tags.some(tag => place.tagList.includes(tag));
         return matchesCategory && matchesTag;
       });
 
@@ -566,16 +566,22 @@
 
       el.categoryChips.innerHTML = "";
       filters.forEach(filter => {
-        const active = filter.kind === "category" ? state.category === filter.value : state.tag === filter.value;
+        const active = filter.kind === "category"
+          ? state.categories.includes(filter.value)
+          : state.tags.includes(filter.value);
         const button = document.createElement("button");
         button.type = "button";
         button.className = `chip${active ? " active" : ""}`;
         button.textContent = filter.label;
         button.addEventListener("click", () => {
           if (filter.kind === "category") {
-            state.category = state.category === filter.value ? "" : filter.value;
+            state.categories = state.categories.includes(filter.value)
+              ? state.categories.filter(value => value !== filter.value)
+              : [...state.categories, filter.value];
           } else {
-            state.tag = state.tag === filter.value ? "" : filter.value;
+            state.tags = state.tags.includes(filter.value)
+              ? state.tags.filter(value => value !== filter.value)
+              : [...state.tags, filter.value];
           }
           renderFilterChips();
           render();
@@ -625,7 +631,7 @@
         place.marker = marker;
       });
 
-      const hasActiveFilters = Boolean(state.category || state.tag || state.userLocation);
+      const hasActiveFilters = Boolean(state.categories.length || state.tags.length || state.userLocation);
       if (!items.length) return;
 
       if (!hasActiveFilters) {
