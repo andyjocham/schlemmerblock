@@ -12,7 +12,6 @@ Kleine mobile Kartenansicht fuer den Schlemmerblock mit:
 - `index.html`: Hauptdatei fuer lokale Vorschau und Bearbeitung
 - `docs/index.html`: GitHub-Pages-Einstieg
 - `Schlemmerblock.html`: mitnehmbarer Einzeldatei-Stand
-- `ANLEITUNG_IPHONE.md`: kurze iPhone-Anleitung
 - `GITHUB_PAGES.md`: Veroeffentlichung ueber GitHub Pages
 
 ## Lokal starten
