@@ -90,29 +90,6 @@
       font-size: .85rem;
     }
 
-    .version-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      color: var(--muted);
-      font-size: .76rem;
-      line-height: 1.2;
-    }
-
-    .version-badge {
-      display: inline-flex;
-      align-items: center;
-      min-height: 22px;
-      padding: 2px 9px;
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      background: var(--soft);
-      color: var(--ink);
-      font-weight: 700;
-      white-space: nowrap;
-    }
-
     input, select, button {
       font: inherit;
     }
@@ -241,58 +218,6 @@
       text-decoration: none;
     }
 
-    .update-toast {
-      position: fixed;
-      left: 12px;
-      right: 12px;
-      bottom: 14px;
-      z-index: 1200;
-      display: none;
-      gap: 10px;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 14px;
-      border: 1px solid rgba(255, 255, 255, .25);
-      border-radius: 14px;
-      background: rgba(23, 32, 29, .94);
-      color: #fff;
-      box-shadow: 0 14px 30px rgba(0, 0, 0, .28);
-      backdrop-filter: blur(12px);
-    }
-
-    .update-toast.show {
-      display: flex;
-    }
-
-    .toast-copy {
-      min-width: 0;
-    }
-
-    .toast-copy strong {
-      display: block;
-      margin-bottom: 3px;
-      font-size: .88rem;
-    }
-
-    .toast-copy span {
-      display: block;
-      color: rgba(255, 255, 255, .82);
-      font-size: .78rem;
-      line-height: 1.25;
-    }
-
-    .toast-close {
-      flex: 0 0 auto;
-      width: 34px;
-      height: 34px;
-      border: 1px solid rgba(255, 255, 255, .2);
-      border-radius: 999px;
-      background: rgba(255, 255, 255, .08);
-      color: #fff;
-      font-size: 1rem;
-      font-weight: 700;
-    }
-
     .marker {
       display: grid;
       place-items: center;
@@ -346,10 +271,6 @@
           <h1>Schlemmerblock 2026</h1>
           <div class="count" id="count">79 Treffer</div>
         </div>
-        <div class="version-row">
-          <span>Updates kommen automatisch ueber dieselbe URL.</span>
-          <span class="version-badge" id="versionBadge">Version</span>
-        </div>
       </header>
 
       <div class="filters">
@@ -363,17 +284,8 @@
     </section>
     <div id="map" aria-label="Karte"></div>
   </main>
-  <div class="update-toast" id="updateToast" role="status" aria-live="polite">
-    <div class="toast-copy">
-      <strong>Neue Version geladen</strong>
-      <span>Einmal schliessen und beim naechsten Oeffnen ist alles aktuell.</span>
-    </div>
-    <button class="toast-close" id="toastClose" type="button" aria-label="Hinweis schliessen">OK</button>
-  </div>
-
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    const VERSION = "2026-05-25";
     const PLACES = [
       { name: "Gohan Ramen & Asianfusion", city: "Ulm", category: "Restaurant", tags: "MG+2:1" },
       { name: "Henpoint - Hähnchen Restaurant", city: "Ulm", category: "Restaurant", tags: "MG+2:1, NEU" },
@@ -564,7 +476,6 @@
     };
 
     const STORAGE_KEY = "schlemmerblock.visited.v1";
-    const VERSION_KEY = "schlemmerblock.version.v1";
     const safeStorage = {
       get(key) {
         try {
@@ -597,10 +508,7 @@
       app: document.querySelector(".app"),
       count: document.querySelector("#count"),
       categoryChips: document.querySelector("#categoryChips"),
-      locate: document.querySelector("#locate"),
-      versionBadge: document.querySelector("#versionBadge"),
-      updateToast: document.querySelector("#updateToast"),
-      toastClose: document.querySelector("#toastClose")
+      locate: document.querySelector("#locate")
     };
 
     function escapeHtml(value) {
@@ -790,15 +698,6 @@
       safeStorage.set(STORAGE_KEY, JSON.stringify([...visited]));
     }
 
-    function syncVersionNotice() {
-      const seenVersion = safeStorage.get(VERSION_KEY);
-      el.versionBadge.textContent = `Stand ${VERSION}`;
-      if (seenVersion && seenVersion !== VERSION) {
-        el.updateToast.classList.add("show");
-      }
-      safeStorage.set(VERSION_KEY, VERSION);
-    }
-
     function toggleVisited(id) {
       const place = PLACES.find(item => item.id === id);
       if (!place) return;
@@ -837,12 +736,7 @@
       });
     });
 
-    el.toastClose.addEventListener("click", () => {
-      el.updateToast.classList.remove("show");
-    });
-
     initControls();
-    syncVersionNotice();
     render();
   </script>
 </body>
