@@ -90,6 +90,29 @@
       font-size: .85rem;
     }
 
+    .version-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: .76rem;
+      line-height: 1.2;
+    }
+
+    .version-badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 2px 9px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--soft);
+      color: var(--ink);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
     input, select, button {
       font: inherit;
     }
@@ -218,6 +241,58 @@
       text-decoration: none;
     }
 
+    .update-toast {
+      position: fixed;
+      left: 12px;
+      right: 12px;
+      bottom: 14px;
+      z-index: 1200;
+      display: none;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      border: 1px solid rgba(255, 255, 255, .25);
+      border-radius: 14px;
+      background: rgba(23, 32, 29, .94);
+      color: #fff;
+      box-shadow: 0 14px 30px rgba(0, 0, 0, .28);
+      backdrop-filter: blur(12px);
+    }
+
+    .update-toast.show {
+      display: flex;
+    }
+
+    .toast-copy {
+      min-width: 0;
+    }
+
+    .toast-copy strong {
+      display: block;
+      margin-bottom: 3px;
+      font-size: .88rem;
+    }
+
+    .toast-copy span {
+      display: block;
+      color: rgba(255, 255, 255, .82);
+      font-size: .78rem;
+      line-height: 1.25;
+    }
+
+    .toast-close {
+      flex: 0 0 auto;
+      width: 34px;
+      height: 34px;
+      border: 1px solid rgba(255, 255, 255, .2);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .08);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
     .marker {
       display: grid;
       place-items: center;
@@ -271,6 +346,10 @@
           <h1>Schlemmerblock 2026</h1>
           <div class="count" id="count">79 Treffer</div>
         </div>
+        <div class="version-row">
+          <span>Updates kommen automatisch ueber dieselbe URL.</span>
+          <span class="version-badge" id="versionBadge">Version</span>
+        </div>
       </header>
 
       <div class="filters">
@@ -284,9 +363,17 @@
     </section>
     <div id="map" aria-label="Karte"></div>
   </main>
+  <div class="update-toast" id="updateToast" role="status" aria-live="polite">
+    <div class="toast-copy">
+      <strong>Neue Version geladen</strong>
+      <span>Einmal schliessen und beim naechsten Oeffnen ist alles aktuell.</span>
+    </div>
+    <button class="toast-close" id="toastClose" type="button" aria-label="Hinweis schliessen">OK</button>
+  </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
+    const VERSION = "2026-05-25";
     const PLACES = [
       { name: "Gohan Ramen & Asianfusion", city: "Ulm", category: "Restaurant", tags: "MG+2:1" },
       { name: "Henpoint - Hähnchen Restaurant", city: "Ulm", category: "Restaurant", tags: "MG+2:1, NEU" },
@@ -369,6 +456,56 @@
       { name: "Movie Park Germany", city: "Bottrop", category: "Freizeit", tags: "ME" }
     ];
 
+    const PLACE_DETAILS = {
+      "Gohan Ramen & Asianfusion|||Ulm": { address: "Schwambergerstraße 35, 89073 Ulm", coords: [48.402698, 10.0007737] },
+      "Henpoint - Hähnchen Restaurant|||Ulm": { address: "Neue Straße 103, 89073 Ulm", coords: [48.397759, 9.9951531] },
+      "KOBÉS - Burger & Steak Restaurant|||Ulm": { address: "Kapellengasse 7, 89077 Ulm", coords: [48.394848, 9.9546893] },
+      "Albvereinshäusle|||Ulm": { address: "Kutschenberg 44, 89079 Ulm", coords: [48.3545404, 9.9932068] },
+      "MAGICUISINE by Florian Zimmer|||Neu-Ulm": { address: "Grethe-Weiser-Straße 2/1, 89231 Neu-Ulm", coords: [48.3839316, 10.0075929] },
+      "Rudolph Quelle|||Neu-Ulm": { address: "Schwabenstraße 76 1/2, 89231 Neu-Ulm", coords: [48.3994383, 10.0223312] },
+      "Vabene Italian Cucina|||Neu-Ulm": { address: "Turmstraße 38, 89231 Neu-Ulm", coords: [48.3909794, 10.0029265] },
+      "Klingenstein Hotel|Wirtshaus|Brauerei|||Blaustein": { address: "Ulmer Straße 30, 89134 Blaustein", coords: [48.4184924, 9.9085334] },
+      "Robo's Waldblick|||Blaustein": { address: "Am Krotenberg 3, 89134 Blaustein", coords: [48.3807593, 9.8618122] },
+      "Pizzeria by Ghucci|||Erbach": { address: "Dellmensinger Straße 60, 89155 Erbach", coords: [48.294899, 9.8618568] },
+      "Casa dell Olivo|||Senden": { address: "Landgrabenweg 25, 89250 Senden", coords: [48.3224489, 10.0534091] },
+      "Restaurant Café Chiara|||Vöhringen": { address: "Illerstraße 28, 89269 Vöhringen", coords: [48.2765777, 10.0757111] },
+      "Ristorante - Pizzeria Bella Italia|||Weißenhorn": { address: "Kaiser-Karl-Straße 20, 89264 Weißenhorn", coords: [48.3066448, 10.1601679] },
+      "So Be - The Urban Kitchen im Zehntstadel|||Leipheim": { address: "Schloßhof 2, 89340 Leipheim", coords: [48.4502559, 10.2192808] },
+      "LA PIETRA VERDE|||Amstetten": { address: "Hauptstraße 105, 73340 Amstetten", coords: [48.579975, 9.8735338] },
+      "Balkanrestaurant PiK|||Ehingen": { address: "Ortsstraße 33, 89584 Ehingen (Donau)", coords: [48.2737965, 9.6634133] },
+      "Fässle|||Laupheim": { address: "Biberacher Straße 65, 88471 Laupheim", coords: [48.2208113, 9.8794527] },
+      "Gusto Italiano Pizzeria|||Bellenberg": { address: "Ulmer Straße 2, 89287 Bellenberg", coords: [48.2569757, 10.0932293] },
+      "Bowling- & Kegelcenter Geislingen|||Geislingen an der Steige": { address: "Heidenheimer Straße 87, 73312 Geislingen an der Steige", coords: [48.628234, 9.8417253] },
+      "Trattoria da Bruno|||Munderkingen": { address: "Donaustraße 12, 89597 Munderkingen", coords: [48.2364585, 9.6434881] },
+      "Gasthof Zum Adler|||Oberstadion": { address: "Kirchplatz 31, 89613 Oberstadion", coords: [48.1858162, 9.6910681] },
+      "Bistro Jo. im Reformhaus Glück|||Krumbach (Schwaben)": { address: "Marktplatz 12, 86381 Krumbach (Schwaben)", coords: [48.2430322, 10.3637607] },
+      "Ho Kitchen & Bar|||Krumbach (Schwaben)": { address: "Marktplatz 18, 86381 Krumbach (Schwaben)", coords: [48.2428128, 10.3623776] },
+      "KLEE Irish Pub|||Burgau": { address: "Stadtstraße 6, 89331 Burgau", coords: [48.4318073, 10.4069506] },
+      "Ristorante Pizzeria Santa Maria|||Gundelfingen": { address: "Lauinger Straße 15, 89423 Gundelfingen an der Donau", coords: [48.5549385, 10.37092] },
+      "Gasthof Zum Stift|||Medlingen": { address: "Hauptstraße 25, 89441 Medlingen", coords: [48.5681618, 10.3215366] },
+      "Domino's Ulm|||Ulm": { address: "Frauenstraße 38/40, 89073 Ulm", coords: [48.4002777, 9.9970301] },
+      "Burger King|||Ulm": { address: "Blaubeurer Straße 17, 89077 Ulm", coords: [48.4016619, 9.9767366] },
+      "Come Prima|||Neu-Ulm": { address: "Julius-Rohm-Platz, 89231 Neu-Ulm", coords: [48.3931746, 10.0040714] },
+      "Subway Neu-Ulm|||Neu-Ulm": { address: "Im Starkfeld 55, 89231 Neu-Ulm", coords: [48.395737, 10.0203221] },
+      "Subway Scheppach|||Jettingen-Scheppach": { address: "Siemensstraße 12, 89343 Jettingen-Scheppach", coords: [48.4099063, 10.4392501] },
+      "McDonald's|||Giengen": { address: "Am Bühlfeld 1, 89537 Giengen an der Brenz", coords: [48.6150777, 10.2060875] },
+      "Subway Lauingen|||Lauingen": { address: "Werner-von-Siemens-Straße 2/1, 89415 Lauingen", coords: [48.5748742, 10.4475054] },
+      "Café Bistro Vorfeld Inn|||Neu-Ulm": { address: "Steubenstraße 34, 89231 Neu-Ulm", coords: [48.3903602, 10.0076555] },
+      "Museumscafé am Petrusplatz|||Neu-Ulm": { address: "Petrusplatz 4, 89231 Neu-Ulm", coords: [48.3936094, 9.9991009] },
+      "BESTIALE - Aperitivo Tagesbar|||Ulm": { address: "Schelergasse 4, 89073 Ulm", coords: [48.3967444, 9.9948101] },
+      "Café Alba|||Ulm": { address: "Hafenbad 3, 89073 Ulm", coords: [48.3993449, 9.9935393] },
+      "CALVI - Café & Vintage Clothing|||Ulm": { address: "Neue Straße 83, 89073 Ulm", coords: [48.3977817, 9.9931752] },
+      "Gelateria Miraval|||Ulm": { address: "Glöcklerstraße 6, 89073 Ulm", coords: [48.3976503, 9.9870004] },
+      "Manufaktur-Café ANIMO!|||Ulm": { address: "Syrlinstraße 17, 89073 Ulm", coords: [48.4039357, 9.9901856] },
+      "VOI café | gelato | bar|||Ulm": { address: "Hirschstraße 4, 89073 Ulm", coords: [48.3983914, 9.9900239] },
+      "Eiscafé Bof|||Blaubeuren": { address: "Klosterstraße 6, 89143 Blaubeuren", coords: [48.4132685, 9.7835729] },
+      "Dida Eismanufaktur|||Senden": { address: "Hauptstraße 32, 89250 Senden", coords: [48.3241012, 10.0444124] },
+      "Café & Bistro klein & fein|||Oberdischingen": { address: "Schlossplatz 3, 89610 Oberdischingen", coords: [48.3013965, 9.8321786] },
+      "AM Café Bar|||Illertissen": { address: "Bräuhausstraße 2, 89257 Illertissen", coords: [48.2214634, 10.1067353] },
+      "Café Schneewittchen|||Illertissen": { address: "Hauptstraße 1, 89257 Illertissen", coords: [48.2226983, 10.1041782] },
+      "Goldener Bock Eventlocation & Cocktailbar|||Ulm": { address: "Bockgasse 25, 89073 Ulm", coords: [48.3996184, 9.9986759] }
+    };
+
     const CITY_COORDS = {
       "Aalen": [48.8378, 10.0933],
       "Amstetten": [48.5785, 9.8731],
@@ -427,6 +564,7 @@
     };
 
     const STORAGE_KEY = "schlemmerblock.visited.v1";
+    const VERSION_KEY = "schlemmerblock.version.v1";
     const safeStorage = {
       get(key) {
         try {
@@ -459,7 +597,10 @@
       app: document.querySelector(".app"),
       count: document.querySelector("#count"),
       categoryChips: document.querySelector("#categoryChips"),
-      locate: document.querySelector("#locate")
+      locate: document.querySelector("#locate"),
+      versionBadge: document.querySelector("#versionBadge"),
+      updateToast: document.querySelector("#updateToast"),
+      toastClose: document.querySelector("#toastClose")
     };
 
     function escapeHtml(value) {
@@ -510,11 +651,13 @@
     }
 
     PLACES.forEach((place, index) => {
+      const detail = PLACE_DETAILS[`${place.name}|||${place.city}`];
       place.id = index;
       place.key = `${index}:${place.name}:${place.city}`;
-      place.coords = offsetCoords(place, index);
+      place.address = detail?.address || "";
+      place.coords = detail?.coords || offsetCoords(place, index);
       place.tagList = tagList(place.tags);
-      place.searchText = [place.name, place.city, place.category, place.tags].join(" ").toLowerCase();
+      place.searchText = [place.name, place.city, place.category, place.tags, place.address].join(" ").toLowerCase();
     });
 
     function haversineKm(a, b) {
@@ -591,7 +734,7 @@
     }
 
     function mapsUrl(place) {
-      return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${place.name}, ${place.city}`)}`;
+      return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.address ? `${place.name}, ${place.address}` : `${place.name}, ${place.city}`)}`;
     }
 
     function markerIcon(place) {
@@ -613,6 +756,7 @@
         <div class="popup">
           <strong>${escapeHtml(place.name)}</strong>
           <div>${escapeHtml(place.city)} · ${escapeHtml(place.category)}</div>
+          ${place.address ? `<div style="margin-top:4px">${escapeHtml(place.address)}</div>` : ""}
           <div class="meta" style="margin-top:7px">${tags || escapeHtml(place.tags)}</div>
           <button class="visited-toggle" style="margin-top:9px;width:auto;padding:0 12px;display:inline-flex;gap:7px" type="button" aria-pressed="${isVisited}" onclick="toggleVisited(${place.id})">
             ${isVisited ? "✓ Besucht" : "Abhaken"}
@@ -644,6 +788,15 @@
 
     function persistVisited() {
       safeStorage.set(STORAGE_KEY, JSON.stringify([...visited]));
+    }
+
+    function syncVersionNotice() {
+      const seenVersion = safeStorage.get(VERSION_KEY);
+      el.versionBadge.textContent = `Stand ${VERSION}`;
+      if (seenVersion && seenVersion !== VERSION) {
+        el.updateToast.classList.add("show");
+      }
+      safeStorage.set(VERSION_KEY, VERSION);
     }
 
     function toggleVisited(id) {
@@ -684,7 +837,12 @@
       });
     });
 
+    el.toastClose.addEventListener("click", () => {
+      el.updateToast.classList.remove("show");
+    });
+
     initControls();
+    syncVersionNotice();
     render();
   </script>
 </body>
